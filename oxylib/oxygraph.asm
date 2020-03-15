@@ -1,9 +1,27 @@
 DSEG        SEGMENT
-        oxg_pointAx DW 1
-        oxg_pointAy DW 1
+        ; Define colors
+        _BLACK_     EQU 00h
+        _BLUE_      EQU 01h
+        _GREEN_     EQU 02h
+        _CYAN_      EQU 03h
+        _RED_       EQU 04h
+        _MAGENTA_   EQU 05h
+        _BROWN_     EQU 06h
+        _WHITE_     EQU 07h
+        _GRAY_      EQU 08h
+        _LBLUE_     EQU 09h
+        _LGREEN_    EQU 0Ah
+        _LCYAN_     EQU 0Bh
+        _LRED_      EQU 0Ch
+        _LMAGENTA_  EQU 0Dh
+        _YELLOW_    EQU 0Eh
+        _WHITE_     EQU 0Fh
 
-        oxg_pointBx DW 1  
-        oxg_pointBy DW 1 
+        oxg_xA DW 1
+        oxg_yA DW 1
+
+        oxg_xB DW 1  
+        oxg_yB DW 1 
 DSEG        ENDS
 
 RESETVIDEOMEM:
@@ -23,28 +41,51 @@ oxgSETUPGRAPHICS:
     call SETVIDEOMODE
     ret
 
-; CLEAR
-;   clear the screen
-;   --> Thanks to https://stackoverflow.com/a/41318704
-oxgCLEAR:
-    cld                     ; Set forward direction for STOSD
-    call SETVIDEOMODE
+; FILL
+;   fill the screen with color
+;   --> Thanks to https://github.com/AhmadNaserTurnkeySolutions/emu8086/blob/b99ea60f5dbf8647f278eef60ed1bd8a174468e5/inc/emu8086.inc#L470
+oxgFILL MACRO color
+        PUSH    AX      ; store registers...
+        PUSH    DS      ;
+        PUSH    BX      ;
+        PUSH    CX      ;
+        PUSH    DI      ;
 
-    push ES                 ; Save ES
-    call RESETVIDEOMEM
-    mov AX, 00              ; Set the color to clear with 00=black
-    xor DI, DI              ; Destination address set to 0
-    mov CX, (320*200)/2     ; We are doing 2 bytes at a time so count = (320*200)/2 DWORDS
-    rep STOSW               ; Clear video memory
-    pop ES                  ; Restore ES
-    ret
+        MOV     AX, 40h
+        MOV     DS, AX  ; for getting screen parameters.
+        MOV     AH, 06h ; scroll up function id.
+        MOV     AL, 0   ; scroll all lines!
+        MOV     BH, color  ; attribute for new lines.
+        MOV     CH, 0   ; upper row.
+        MOV     CL, 0   ; upper col.
+        MOV     DI, 84h ; rows on screen -1,
+        MOV     DH, [DI] ; lower row (byte).
+        MOV     DI, 4Ah ; columns on screen,
+        MOV     DL, [DI]
+        DEC     DL      ; lower col.
+        INT     10h
+
+        ; set cursor position to top
+        ; of the screen:
+        MOV     BH, 0   ; current page.
+        MOV     DL, 0   ; col.
+        MOV     DH, 0   ; row.
+        MOV     AH, 02
+        INT     10h
+
+        POP     DI      ; re-store registers...
+        POP     CX      ;
+        POP     BX      ;
+        POP     DS      ;
+        POP     AX      ;
+ENDM
 
 ; SHOWPIXEL
-;   draw a pixel at (xA,yA) with color (hex code)
+;   draw a pixel at (xA,yA) with color
 oxgSHOWPIXEL MACRO xA, yA, color
     mov Al, color
-    mov CX, xA ; position x du point
-    mov DX, yA ; position y du point
+    mov CX, xA      ; position x du point
+    mov DX, yA      ; position y du point
 
     mov AH, 0Ch     ; On veut afficher un pixel
     mov BH, 1       ; page no - critical while animating
@@ -52,58 +93,58 @@ oxgSHOWPIXEL MACRO xA, yA, color
 ENDM
 
 ; SHOWHORLINE
-;   draw a horizontal line from (oxg_pointAx,oxg_pointAy) to (oxg_pointBx,oxg_pointAy) with AL color
+;   draw a horizontal line from (oxg_xA,oxg_yA) to (oxg_xB,oxg_yA) with AL color
 oxgSHOWHORLINE:
-    call oxgSHOWPIXEL   ; on dessine le pixel
+    oxgSHOWPIXEL oxg_xA, oxg_yA, AL   ; on dessine le pixel
 
     inc CX              ; on augmente ...
-    mov oxg_pointAx, CX ; ... sa position x
+    mov oxg_xA, CX      ; ... sa position x
 
-    cmp CX, oxg_pointBx ; on vérifie que la nouvelle position est ...
+    cmp CX, oxg_xB      ; on vérifie que la nouvelle position est ...
     jle oxgSHOWHORLINE  ; ... <= au max. Oui => On recommence, non => on arrête
 
     ret
 
 ; SHOWVERTLINE
-;   draw a vertical line from (oxg_pointAx,oxg_pointAy) to (oxg_pointAx,oxg_pointBy) with AL color
+;   draw a vertical line from (oxg_xA,oxg_yA) to (oxg_xA,oxg_yB) with AL color
 oxgSHOWVERTLINE:
-    call oxgSHOWPIXEL   ; on dessine le pixel
+    oxgSHOWPIXEL oxg_xA, oxg_yA, AL   ; on dessine le pixel
 
     inc DX              ; on augmente ...
-    mov oxg_pointAy, DX ; ... sa position y
+    mov oxg_yA, DX ; ... sa position y
 
-    cmp DX, oxg_pointBy ; on vérifie que la nouvelle position est ...
+    cmp DX, oxg_yB ; on vérifie que la nouvelle position est ...
     jle oxgSHOWVERTLINE ; ... <= au max. Oui => On recommence, non => on arrête
 
     ret
 
 ; SHOWSQUARE
-;   draw a square from (oxg_pointAx,oxg_pointAy) to (oxg_pointBx, oxg_pointBy) with AL color
+;   draw a square from (oxg_xA,oxg_yA) to (oxg_xB, oxg_yB) with AL color
 oxgSHOWSQUARE:
-    push oxg_pointAx    ; on sauvegarde la position x du point A
+    push oxg_xA    ; on sauvegarde la position x du point A
     call oxgSHOWHORLINE ; on dessine une ligne horizontale
-    pop oxg_pointAx     ; on restaure la position x du point A
+    pop oxg_xA     ; on restaure la position x du point A
 
-    push oxg_pointAy    ; on sauvegarde la position y du point A
+    push oxg_yA    ; on sauvegarde la position y du point A
     call oxgSHOWVERTLINE; on dessine une ligne verticale
-    pop oxg_pointAy     ; on restaure la position y du point A
+    pop oxg_yA     ; on restaure la position y du point A
 
-    push oxg_pointAy    ; on sauvegarde la position y du point A
-    mov BX, oxg_pointBy ; on passe de l'autre côté du rectangle ...
-    mov oxg_pointAy, BX ; ... cad on fait By => Ay (pour la ligne horizontale)
+    push oxg_yA    ; on sauvegarde la position y du point A
+    mov BX, oxg_yB ; on passe de l'autre côté du rectangle ...
+    mov oxg_yA, BX ; ... cad on fait By => Ay (pour la ligne horizontale)
 
-    push oxg_pointAx    ; on sauvegarde la position x du point A
+    push oxg_xA    ; on sauvegarde la position x du point A
     call oxgSHOWHORLINE ; on dessine une ligne horizontale
-    pop oxg_pointAx     ; on restaure la position x du point A
+    pop oxg_xA     ; on restaure la position x du point A
 
-    pop oxg_pointAy     ; on restaure l'ancienne position y du point A
+    pop oxg_yA     ; on restaure l'ancienne position y du point A
 
-    push oxg_pointAx    ; on sauvegarde la position x du point A
-    mov BX, oxg_pointBx ; on passe de l'autre côté du rectangle ...
-    mov oxg_pointAx, BX ; ... cad on fait  Bx => Ax (pour la ligne verticale)
+    push oxg_xA    ; on sauvegarde la position x du point A
+    mov BX, oxg_xB ; on passe de l'autre côté du rectangle ...
+    mov oxg_xA, BX ; ... cad on fait  Bx => Ax (pour la ligne verticale)
 
     call oxgSHOWVERTLINE; on dessine une ligne verticale
 
-    pop oxg_pointAx     ; on restaure l'ancienne position x du point A
+    pop oxg_xA     ; on restaure l'ancienne position x du point A
 
     ret
