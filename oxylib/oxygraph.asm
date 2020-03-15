@@ -15,7 +15,7 @@ DSEG        SEGMENT
         _LRED_      EQU 0Ch
         _LMAGENTA_  EQU 0Dh
         _YELLOW_    EQU 0Eh
-        _WHITE_     EQU 0Fh
+        _BWHITE_    EQU 0Fh
 
         oxg_xA DW 1
         oxg_yA DW 1
