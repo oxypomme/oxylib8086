@@ -9,17 +9,18 @@ DSEG        ENDS
 RESETVIDEOMEM:
     mov AX, 0A000h
     mov ES, AX              ; Beginning of VGA memory in segment 0xA000
+    ret
 
 SETVIDEOMODE:
     mov  AX, 13h    ; Mode VGA de l'affichage, 13h signifie une mémoire de 320*200 avec 256 couleurs
     int  10h
+    ret
 
 ; SETUPGRAPHICS
 ;   initialize few things before we start 
 oxgSETUPGRAPHICS:
     call RESETVIDEOMEM
     call SETVIDEOMODE
-
     ret
 
 ; CLEAR
