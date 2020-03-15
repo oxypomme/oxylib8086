@@ -39,16 +39,16 @@ oxgCLEAR:
     pop ES                  ; Restore ES
 
 ; SHOWPIXEL
-;   draw a pixel to (oxg_pointAx,oxg_pointAy) with AL color
-oxgSHOWPIXEL:
-    mov CX, oxg_pointAx ; position x du point
-    mov DX, oxg_pointAy ; position y du point
+;   draw a pixel at (xA,yA) with color (hex code)
+oxgSHOWPIXEL MACRO xA, yA, color
+    mov Al, color
+    mov CX, xA ; position x du point
+    mov DX, yA ; position y du point
 
     mov AH, 0Ch     ; On veut afficher un pixel
     mov BH, 1       ; page no - critical while animating
     int 10h         ; affichage
-
-    ret
+ENDM
 
 ; SHOWHORLINE
 ;   draw a horizontal line from (oxg_pointAx,oxg_pointAy) to (oxg_pointBx,oxg_pointAy) with AL color
