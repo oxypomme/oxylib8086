@@ -6,15 +6,36 @@ DSEG        SEGMENT
         oxg_pointBy DW 1 
 DSEG        ENDS
 
+RESETVIDEOMEM:
+    mov AX, 0A000h
+    mov ES, AX              ; Beginning of VGA memory in segment 0xA000
+
+SETVIDEOMODE:
+    mov  AX, 13h    ; Mode VGA de l'affichage, 13h signifie une mémoire de 320*200 avec 256 couleurs
+    int  10h
+
 ; SETUPGRAPHICS
 ;   initialize few things before we start 
 oxgSETUPGRAPHICS:
-    mov  AX, 0A000h ; ¯\_(ツ)_/¯
-    mov  ES, AX     ; ¯\_(ツ)_/¯
-    mov  AX, 13h    ; Mode VGA de l'affichage, 13h signifie une mémoire de 320*200 avec 256 couleurs
-    int  10h        ; On affiche le tout
+    call RESETVIDEOMEM
+    call SETVIDEOMODE
 
     ret
+
+; CLEAR
+;   clear the screen
+;   --> Thanks to https://stackoverflow.com/a/41318704
+oxgCLEAR:
+    cld                     ; Set forward direction for STOSD
+    call SETVIDEOMODE
+
+    push ES                 ; Save ES
+    call RESETVIDEOMEM
+    mov AX, 00              ; Set the color to clear with 00=black
+    xor DI, DI              ; Destination address set to 0
+    mov CX, (320*200)/2     ; We are doing 2 bytes at a time so count = (320*200)/2 DWORDS
+    rep STOSW               ; Clear video memory
+    pop ES                  ; Restore ES
 
 ; SHOWPIXEL
 ;   draw a pixel to (oxg_pointAx,oxg_pointAy) with AL color
