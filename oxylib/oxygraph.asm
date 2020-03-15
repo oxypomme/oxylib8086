@@ -21,7 +21,7 @@ DSEG        SEGMENT
         oxg_yA DW 1
 
         oxg_xB DW 1  
-        oxg_yB DW 1 
+        oxg_yB DW 1
 DSEG        ENDS
 
 RESETVIDEOMEM:
@@ -93,40 +93,44 @@ oxgSHOWPIXEL MACRO xA, yA, color
 ENDM
 
 ; SHOWHORLINE
-;   draw a horizontal line from (oxg_xA,oxg_yA) to (oxg_xB,oxg_yA) with AL color
-oxgSHOWHORLINE:
-    oxgSHOWPIXEL oxg_xA, oxg_yA, AL   ; on dessine le pixel
+;   draw a horizontal line from (xA,yA) to (xB,yA) with color
+oxgSHOWHORLINE MACRO xA, yA, xB, color
+    local drawLoop        ; on définit un label local
 
-    inc CX              ; on augmente ...
-    mov oxg_xA, CX      ; ... sa position x
+    mov CX, xA            ; on met xA dans CX
+    drawLoop:
+        oxgSHOWPIXEL CX, yA, color  ; on dessine le pixel
 
-    cmp CX, oxg_xB      ; on vérifie que la nouvelle position est ...
-    jle oxgSHOWHORLINE  ; ... <= au max. Oui => On recommence, non => on arrête
+        inc CX                      ; on augmente la position x
 
-    ret
+        cmp CX, xB                  ; on vérifie que la nouvelle position est ...
+        jle drawLoop                ; ... <= au max. Oui => On recommence, non => on arrête
+ENDM
 
 ; SHOWVERTLINE
-;   draw a vertical line from (oxg_xA,oxg_yA) to (oxg_xA,oxg_yB) with AL color
-oxgSHOWVERTLINE:
-    oxgSHOWPIXEL oxg_xA, oxg_yA, AL   ; on dessine le pixel
+;   draw a vertical line from (xA,yA) to (xA,yB) with AL color
+oxgSHOWVERTLINE MACRO xA, yA, yB, color
+    local drawLoop        ; on définit un label local
 
-    inc DX              ; on augmente ...
-    mov oxg_yA, DX ; ... sa position y
+    mov DX, yA            ; on met xA dans CX
+    drawLoop:
+        oxgSHOWPIXEL xA, DX, color   ; on dessine le pixel
 
-    cmp DX, oxg_yB ; on vérifie que la nouvelle position est ...
-    jle oxgSHOWVERTLINE ; ... <= au max. Oui => On recommence, non => on arrête
+        inc DX                       ; on augmente sa position y
 
-    ret
+        cmp DX, yB                   ; on vérifie que la nouvelle position est ...
+        jle drawLoop                 ; ... <= au max. Oui => On recommence, non => on arrête
+ENDM
 
 ; SHOWSQUARE
 ;   draw a square from (oxg_xA,oxg_yA) to (oxg_xB, oxg_yB) with AL color
 oxgSHOWSQUARE:
     push oxg_xA    ; on sauvegarde la position x du point A
-    call oxgSHOWHORLINE ; on dessine une ligne horizontale
+    oxgSHOWHORLINE oxg_xA, oxg_yA, oxg_xB, AL ; on dessine une ligne horizontale
     pop oxg_xA     ; on restaure la position x du point A
 
     push oxg_yA    ; on sauvegarde la position y du point A
-    call oxgSHOWVERTLINE; on dessine une ligne verticale
+    oxgSHOWVERTLINE oxg_xA, oxg_yA, oxg_yB, AL; on dessine une ligne verticale
     pop oxg_yA     ; on restaure la position y du point A
 
     push oxg_yA    ; on sauvegarde la position y du point A
@@ -134,7 +138,7 @@ oxgSHOWSQUARE:
     mov oxg_yA, BX ; ... cad on fait By => Ay (pour la ligne horizontale)
 
     push oxg_xA    ; on sauvegarde la position x du point A
-    call oxgSHOWHORLINE ; on dessine une ligne horizontale
+    oxgSHOWHORLINE oxg_xA, oxg_yA, oxg_xB, AL ; on dessine une ligne horizontale
     pop oxg_xA     ; on restaure la position x du point A
 
     pop oxg_yA     ; on restaure l'ancienne position y du point A
@@ -143,7 +147,7 @@ oxgSHOWSQUARE:
     mov BX, oxg_xB ; on passe de l'autre côté du rectangle ...
     mov oxg_xA, BX ; ... cad on fait  Bx => Ax (pour la ligne verticale)
 
-    call oxgSHOWVERTLINE; on dessine une ligne verticale
+    oxgSHOWVERTLINE oxg_xA, oxg_yA, oxg_yB, AL; on dessine une ligne verticale
 
     pop oxg_xA     ; on restaure l'ancienne position x du point A
 
