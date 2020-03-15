@@ -37,6 +37,7 @@ oxgCLEAR:
     mov CX, (320*200)/2     ; We are doing 2 bytes at a time so count = (320*200)/2 DWORDS
     rep STOSW               ; Clear video memory
     pop ES                  ; Restore ES
+    ret
 
 ; SHOWPIXEL
 ;   draw a pixel at (xA,yA) with color (hex code)
