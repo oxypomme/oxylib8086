@@ -16,12 +16,6 @@ DSEG        SEGMENT
         _LMAGENTA_  EQU 0Dh
         _YELLOW_    EQU 0Eh
         _BWHITE_    EQU 0Fh
-
-        oxg_xA DW 1
-        oxg_yA DW 1
-
-        oxg_xB DW 1  
-        oxg_yB DW 1
 DSEG        ENDS
 
 RESETVIDEOMEM:
@@ -83,7 +77,7 @@ ENDM
 ; SHOWPIXEL
 ;   draw a pixel at (xA,yA) with color
 oxgSHOWPIXEL MACRO xA, yA, color
-    mov Al, color
+    mov AL, color
     mov CX, xA      ; position x du point
     mov DX, yA      ; position y du point
 
@@ -123,32 +117,13 @@ oxgSHOWVERTLINE MACRO xA, yA, yB, color
 ENDM
 
 ; SHOWSQUARE
-;   draw a square from (oxg_xA,oxg_yA) to (oxg_xB, oxg_yB) with AL color
-oxgSHOWSQUARE:
-    push oxg_xA    ; on sauvegarde la position x du point A
-    oxgSHOWHORLINE oxg_xA, oxg_yA, oxg_xB, AL ; on dessine une ligne horizontale
-    pop oxg_xA     ; on restaure la position x du point A
+;   draw a square from (xA,yA) to (xB, yB) with AL color
+oxgSHOWSQUARE MACRO xA, yA, xB, yB, color
+    oxgSHOWHORLINE xA, yA, xB, color    ; on dessine la ligne en haut
 
-    push oxg_yA    ; on sauvegarde la position y du point A
-    oxgSHOWVERTLINE oxg_xA, oxg_yA, oxg_yB, AL; on dessine une ligne verticale
-    pop oxg_yA     ; on restaure la position y du point A
+    oxgSHOWVERTLINE xA, yA, yB, color   ; on dessine la ligne à gauche
 
-    push oxg_yA    ; on sauvegarde la position y du point A
-    mov BX, oxg_yB ; on passe de l'autre côté du rectangle ...
-    mov oxg_yA, BX ; ... cad on fait By => Ay (pour la ligne horizontale)
+    oxgSHOWHORLINE xA, yB, xB, color   ; on dessine la ligne en bas
 
-    push oxg_xA    ; on sauvegarde la position x du point A
-    oxgSHOWHORLINE oxg_xA, oxg_yA, oxg_xB, AL ; on dessine une ligne horizontale
-    pop oxg_xA     ; on restaure la position x du point A
-
-    pop oxg_yA     ; on restaure l'ancienne position y du point A
-
-    push oxg_xA    ; on sauvegarde la position x du point A
-    mov BX, oxg_xB ; on passe de l'autre côté du rectangle ...
-    mov oxg_xA, BX ; ... cad on fait  Bx => Ax (pour la ligne verticale)
-
-    oxgSHOWVERTLINE oxg_xA, oxg_yA, oxg_yB, AL; on dessine une ligne verticale
-
-    pop oxg_xA     ; on restaure l'ancienne position x du point A
-
-    ret
+    oxgSHOWVERTLINE xB, yA, yB, color  ; on dessine la ligne à droite
+ENDM
