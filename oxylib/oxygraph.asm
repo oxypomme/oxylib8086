@@ -39,33 +39,28 @@ oxgSETUPGRAPHICS:
 ; FILL
 ;   fill the screen with color
 oxgFILL MACRO color
-    push    AX          ; on stocke les registres
-    push    DS
-    push    BX
-    push    CX
-    push    DI
+    push AX          ; on stocke les registres
+    push DS
+    push BX
+    push CX
+    push DI
 
-    mov     AX, 40h
-    mov     DS, AX      ; on récupère les paramètres de l'écran
-    mov     AH, 06h
-    mov     AL, 0       ; on remonte toutes les lignes
-    mov     BH, color   ; on attribue de nouvelles lignes
-    mov     CH, 0       ; la colonne la plus haute
-    mov     CL, 0       ; la colonne la plus basse
-    mov     DI, 84h     ; les lignes de l'écran -1
-    mov     DH, [DI]    ; la ligne la plus basse (byte).
-    mov     DI, 4Ah     ; les colonnes de l'écran -1
-    mov     DL, [DI]    ; la colonne la plus basse
-    dec     DL          ; 1 colonne plus basse
-    int     10h         ; on affiche
+    mov  AH, 06h
+    mov  AL, 0       ; on remonte toutes les lignes
+    mov  BH, color   ; on attribue de nouvelles lignes
+    mov  CH, 0       ; la colonne la plus haute
+    mov  CL, 0       ; la colonne la plus basse
+    mov  DH, 25      ; le coin en bas à droite
+    mov  DL, 39
+    int  10h         ; on affiche
 
     oxgCURSOR 0, 0, 0
 
-    pop     DI          ; on restore les registres...
-    pop     CX
-    pop     BX
-    pop     DS
-    pop     AX
+    pop  DI          ; on restore les registres
+    pop  CX
+    pop  BX
+    pop  DS
+    pop  AX
 ENDM
 
 ; CLEAR
@@ -77,11 +72,19 @@ ENDM
 ; SETCURSOR
 ;   set the cursor at (x,y) position at page
 oxgSETCURSOR MACRO page, x, y
-    mov     BH, page       ; page actuelle
-    mov     DL, x          ; collonne actuelle
-    mov     DH, y          ; ligne actuelle
-    mov     AH, 02         ; on change la position du curseur
-    int     10h            ; et on affiche
+    push BX                ; on stocke les registres 
+    push DX
+    push AX
+
+    mov  BH, page       ; page actuelle
+    mov  DL, x          ; collonne actuelle
+    mov  DH, y          ; ligne actuelle
+    mov  AH, 02         ; on change la position du curseur
+    int  10h            ; et on affiche
+
+    pop  AX                 ; on restore les registres
+    pop  DX
+    pop  BX
 ENDM
 
 ; SHOWPIXEL
