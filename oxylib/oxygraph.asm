@@ -33,51 +33,55 @@ SETVIDEOMODE:
 oxgSETUPGRAPHICS:
     call RESETVIDEOMEM
     call SETVIDEOMODE
+    oxgSETCURSOR 0, 0, 0
     ret
 
 ; FILL
 ;   fill the screen with color
-;   --> Thanks to https://github.com/AhmadNaserTurnkeySolutions/emu8086/blob/b99ea60f5dbf8647f278eef60ed1bd8a174468e5/inc/emu8086.inc#L470
 oxgFILL MACRO color
-        PUSH    AX      ; store registers...
-        PUSH    DS      ;
-        PUSH    BX      ;
-        PUSH    CX      ;
-        PUSH    DI      ;
+    push    AX          ; on stocke les registres
+    push    DS
+    push    BX
+    push    CX
+    push    DI
 
-        MOV     AX, 40h
-        MOV     DS, AX  ; for getting screen parameters.
-        MOV     AH, 06h ; scroll up function id.
-        MOV     AL, 0   ; scroll all lines!
-        MOV     BH, color  ; attribute for new lines.
-        MOV     CH, 0   ; upper row.
-        MOV     CL, 0   ; upper col.
-        MOV     DI, 84h ; rows on screen -1,
-        MOV     DH, [DI] ; lower row (byte).
-        MOV     DI, 4Ah ; columns on screen,
-        MOV     DL, [DI]
-        DEC     DL      ; lower col.
-        INT     10h
+    mov     AX, 40h
+    mov     DS, AX      ; on récupère les paramètres de l'écran
+    mov     AH, 06h
+    mov     AL, 0       ; on remonte toutes les lignes
+    mov     BH, color   ; on attribue de nouvelles lignes
+    mov     CH, 0       ; la colonne la plus haute
+    mov     CL, 0       ; la colonne la plus basse
+    mov     DI, 84h     ; les lignes de l'écran -1
+    mov     DH, [DI]    ; la ligne la plus basse (byte).
+    mov     DI, 4Ah     ; les colonnes de l'écran -1
+    mov     DL, [DI]    ; la colonne la plus basse
+    dec     DL          ; 1 colonne plus basse
+    int     10h         ; on affiche
 
-        ; set cursor position to top
-        ; of the screen:
-        MOV     BH, 0   ; current page.
-        MOV     DL, 0   ; col.
-        MOV     DH, 0   ; row.
-        MOV     AH, 02
-        INT     10h
+    oxgCURSOR 0, 0, 0
 
-        POP     DI      ; re-store registers...
-        POP     CX      ;
-        POP     BX      ;
-        POP     DS      ;
-        POP     AX      ;
+    pop     DI          ; on restore les registres...
+    pop     CX
+    pop     BX
+    pop     DS
+    pop     AX
 ENDM
 
 ; CLEAR
 ;   fill the screen with black color
 oxgCLEAR MACRO
     oxgFILL _BLACK_
+ENDM
+
+; SETCURSOR
+;   set the cursor at (x,y) position at page
+oxgSETCURSOR MACRO page, x, y
+    mov     BH, page       ; page actuelle
+    mov     DL, x          ; collonne actuelle
+    mov     DH, y          ; ligne actuelle
+    mov     AH, 02         ; on change la position du curseur
+    int     10h            ; et on affiche
 ENDM
 
 ; SHOWPIXEL
