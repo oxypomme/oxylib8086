@@ -37,12 +37,11 @@ SETVIDEOMODE:
 oxgSETUPGRAPHICS:
     call RESETVIDEOMEM
     call SETVIDEOMODE
-    oxgSETCURSOR 0, 0, 0
     ret
 
 ; FILL
 ;   fill the screen with color
-oxgFILL MACRO color
+oxgFILLS MACRO color
     push AX          ; on stocke les registres
     push DS
     push BX
@@ -58,7 +57,7 @@ oxgFILL MACRO color
     mov  DL, 39
     int  10h         ; on affiche
 
-    oxgCURSOR 0, 0, 0
+    oxgSETCURSOR 0, 0, 0
 
     pop  DI          ; on restore les registres
     pop  CX
@@ -70,7 +69,7 @@ ENDM
 ; CLEAR
 ;   fill the screen with black color
 oxgCLEAR MACRO
-    oxgFILL _BLACK_
+    oxgFILLS _BLACK_
 ENDM
 
 ; SETCURSOR
