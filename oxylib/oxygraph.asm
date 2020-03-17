@@ -19,13 +19,17 @@ DSEG        SEGMENT
 DSEG        ENDS
 
 RESETVIDEOMEM:
-    mov AX, 0A000h
-    mov ES, AX              ; Beginning of VGA memory in segment 0xA000
+    push AX
+    mov  AX, 0A000h
+    mov  ES, AX              ; Beginning of VGA memory in segment 0xA000
+    pop  AX
     ret
 
 SETVIDEOMODE:
+    push AX
     mov  AX, 13h    ; Mode VGA de l'affichage, 13h signifie une mémoire de 320*200 avec 256 couleurs
     int  10h
+    pop  AX
     ret
 
 ; SETUPGRAPHICS
@@ -72,7 +76,7 @@ ENDM
 ; SETCURSOR
 ;   set the cursor at (x,y) position at page
 oxgSETCURSOR MACRO page, x, y
-    push BX                ; on stocke les registres 
+    push BX             ; on stocke les registres 
     push DX
     push AX
 
@@ -82,7 +86,7 @@ oxgSETCURSOR MACRO page, x, y
     mov  AH, 02         ; on change la position du curseur
     int  10h            ; et on affiche
 
-    pop  AX                 ; on restore les registres
+    pop  AX             ; on restore les registres
     pop  DX
     pop  BX
 ENDM
@@ -90,19 +94,31 @@ ENDM
 ; SHOWPIXEL
 ;   draw a pixel at (xA,yA) with color
 oxgSHOWPIXEL MACRO xA, yA, color
-    mov AL, color
-    mov CX, xA      ; position x du point
-    mov DX, yA      ; position y du point
+    push AX          ; on stocke les registres 
+    push CX
+    push DX
+    push BX
 
-    mov AH, 0Ch     ; On veut afficher un pixel
-    mov BH, 1       ; page no - critical while animating
-    int 10h         ; affichage
+    mov  AL, color
+    mov  CX, xA      ; position x du point
+    mov  DX, yA      ; position y du point
+
+    mov  AH, 0Ch     ; On veut afficher un pixel
+    mov  BH, 1       ; page no - critical while animating
+    int  10h         ; affichage
+
+    pop  AX          ; on restore les registres
+    pop  DX
+    pop  CX
+    pop  BX
 ENDM
 
 ; SHOWHORLINE
 ;   draw a horizontal line from (xA,yA) to (xB,yA) with color
 oxgSHOWHORLINE MACRO xA, yA, xB, color
     local drawLoop        ; on définit un label local
+    
+    pop CX                ; on sauvegarde le registre
 
     mov CX, xA            ; on met xA dans CX
     drawLoop:
@@ -112,12 +128,16 @@ oxgSHOWHORLINE MACRO xA, yA, xB, color
 
         cmp CX, xB                  ; on vérifie que la nouvelle position est ...
         jle drawLoop                ; ... <= au max. Oui => On recommence, non => on arrête
+    
+    push CX               ; on restaure le registre
 ENDM
 
 ; SHOWVERTLINE
 ;   draw a vertical line from (xA,yA) to (xA,yB) with AL color
 oxgSHOWVERTLINE MACRO xA, yA, yB, color
     local drawLoop        ; on définit un label local
+
+    pop DX                ; on sauvegarde le registre
 
     mov DX, yA            ; on met xA dans CX
     drawLoop:
@@ -127,6 +147,8 @@ oxgSHOWVERTLINE MACRO xA, yA, yB, color
 
         cmp DX, yB                   ; on vérifie que la nouvelle position est ...
         jle drawLoop                 ; ... <= au max. Oui => On recommence, non => on arrête
+
+    push DX               ; on restaure le registre
 ENDM
 
 ; SHOWSQUARE
