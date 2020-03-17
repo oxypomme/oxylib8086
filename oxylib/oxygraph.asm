@@ -74,6 +74,12 @@ oxgFILL MACRO color
         POP     AX      ;
 ENDM
 
+; CLEAR
+;   fill the screen with black color
+oxgCLEAR MACRO
+    oxgFILL _BLACK_
+ENDM
+
 ; SHOWPIXEL
 ;   draw a pixel at (xA,yA) with color
 oxgSHOWPIXEL MACRO xA, yA, color
