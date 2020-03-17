@@ -106,10 +106,10 @@ oxgSHOWPIXEL MACRO xA, yA, color
     mov  BH, 1       ; page no - critical while animating
     int  10h         ; affichage
 
-    pop  AX          ; on restore les registres
+    pop  BX          ; on restore les registres
     pop  DX
     pop  CX
-    pop  BX
+    pop  AX
 ENDM
 
 ; SHOWHORLINE
@@ -117,7 +117,7 @@ ENDM
 oxgSHOWHORLINE MACRO xA, yA, xB, color
     local drawLoop        ; on définit un label local
     
-    pop CX                ; on sauvegarde le registre
+    push CX                ; on sauvegarde le registre
 
     mov CX, xA            ; on met xA dans CX
     drawLoop:
@@ -128,7 +128,7 @@ oxgSHOWHORLINE MACRO xA, yA, xB, color
         cmp CX, xB                  ; on vérifie que la nouvelle position est ...
         jle drawLoop                ; ... <= au max. Oui => On recommence, non => on arrête
     
-    push CX               ; on restaure le registre
+    pop CX               ; on restaure le registre
 ENDM
 
 ; SHOWVERTLINE
@@ -136,7 +136,7 @@ ENDM
 oxgSHOWVERTLINE MACRO xA, yA, yB, color
     local drawLoop        ; on définit un label local
 
-    pop DX                ; on sauvegarde le registre
+    push DX                ; on sauvegarde le registre
 
     mov DX, yA            ; on met xA dans CX
     drawLoop:
@@ -147,11 +147,11 @@ oxgSHOWVERTLINE MACRO xA, yA, yB, color
         cmp DX, yB                   ; on vérifie que la nouvelle position est ...
         jle drawLoop                 ; ... <= au max. Oui => On recommence, non => on arrête
 
-    push DX               ; on restaure le registre
+    pop DX               ; on restaure le registre
 ENDM
 
 ; SHOWSQUARE
-;   draw a square from (xA,yA) to (xB, yB) with AL color
+;   draw a square from (xA,yA) to (xB, yB) with color
 oxgSHOWSQUARE MACRO xA, yA, xB, yB, color
     oxgSHOWHORLINE xA, yA, xB, color    ; on dessine la ligne en haut
 
@@ -160,4 +160,22 @@ oxgSHOWSQUARE MACRO xA, yA, xB, yB, color
     oxgSHOWHORLINE xA, yB, xB, color   ; on dessine la ligne en bas
 
     oxgSHOWVERTLINE xB, yA, yB, color  ; on dessine la ligne à droite
+ENDM
+
+; SHOWPLAINSQUARE
+;   draw a filled square from (xA,yA) to (xB, yB) with color
+oxgSHOWPLAINSQUARE MACRO xA, yA, xB, yB, color
+    local drawLoop
+
+    push DX
+
+    mov DX, yA
+    drawLoop:
+        oxgSHOWHORLINE xA, DX, xB, color
+
+        inc DX
+
+        cmp DX, yB
+        jle drawLoop
+    pop DX
 ENDM
