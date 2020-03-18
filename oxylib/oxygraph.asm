@@ -1,27 +1,27 @@
-DSEG        SEGMENT
-        ; Define colors
-        _BLACK_     EQU 00h
-        _BLUE_      EQU 01h
-        _GREEN_     EQU 02h
-        _CYAN_      EQU 03h
-        _RED_       EQU 04h
-        _MAGENTA_   EQU 05h
-        _BROWN_     EQU 06h
-        _WHITE_     EQU 07h
-        _GRAY_      EQU 08h
-        _LBLUE_     EQU 09h
-        _LGREEN_    EQU 0Ah
-        _LCYAN_     EQU 0Bh
-        _LRED_      EQU 0Ch
-        _LMAGENTA_  EQU 0Dh
-        _YELLOW_    EQU 0Eh
-        _BWHITE_    EQU 0Fh
-DSEG        ENDS
+DSEG     SEGMENT
+    ; Define colors
+    _BLACK_         EQU 00h
+    _BLUE_          EQU 01h
+    _GREEN_         EQU 02h
+    _CYAN_          EQU 03h
+    _RED_           EQU 04h
+    _MAGENTA_       EQU 05h
+    _BROWN_         EQU 06h
+    _WHITE_         EQU 07h
+    _GRAY_          EQU 08h
+    _LBLUE_         EQU 09h
+    _LGREEN_        EQU 0Ah
+    _LCYAN_         EQU 0Bh
+    _LRED_          EQU 0Ch
+    _LMAGENTA_      EQU 0Dh
+    _YELLOW_        EQU 0Eh
+    _BWHITE_        EQU 0Fh
+DSEG     ENDS
 
 RESETVIDEOMEM:
     push AX
     mov  AX, 0A000h
-    mov  ES, AX              ; Beginning of VGA memory in segment 0xA000
+    mov  ES, AX     ; Beginning of VGA memory in segment 0xA000
     pop  AX
     ret
 
@@ -42,24 +42,26 @@ oxgSETUPGRAPHICS:
 ; FILL
 ;   fill the screen with color
 oxgFILLS MACRO color
-    push AX          ; on stocke les registres
+    ; on stocke les registres
+    push AX
     push DS
     push BX
     push CX
     push DI
 
     mov  AH, 06h
-    mov  AL, 0       ; on remonte toutes les lignes
-    mov  BH, color   ; on attribue de nouvelles lignes
-    mov  CH, 0       ; la colonne la plus haute
-    mov  CL, 0       ; la colonne la plus basse
-    mov  DH, 25      ; le coin en bas à droite
+    mov  AL, 0      ; on remonte toutes les lignes
+    mov  BH, color  ; on attribue de nouvelles lignes
+    mov  CH, 0      ; la colonne la plus haute
+    mov  CL, 0      ; la colonne la plus basse
+    mov  DH, 25     ; le coin en bas à droite
     mov  DL, 39
-    int  10h         ; on affiche
+    int  10h        ; on affiche
 
     oxgSETCURSOR 0, 0, 0
 
-    pop  DI          ; on restore les registres
+    ; on restore les registres
+    pop  DI
     pop  CX
     pop  BX
     pop  DS
@@ -75,17 +77,17 @@ ENDM
 ; SETCURSOR
 ;   set the cursor at (x,y) position at page
 oxgSETCURSOR MACRO page, x, y
-    push BX             ; on stocke les registres 
+    push BX         ; on stocke les registres 
     push DX
     push AX
 
-    mov  BH, page       ; page actuelle
-    mov  DL, x          ; collonne actuelle
-    mov  DH, y          ; ligne actuelle
-    mov  AH, 02         ; on change la position du curseur
-    int  10h            ; et on affiche
+    mov  BH, page   ; page actuelle
+    mov  DL, x      ; collonne actuelle
+    mov  DH, y      ; ligne actuelle
+    mov  AH, 02     ; on change la position du curseur
+    int  10h        ; et on affiche
 
-    pop  AX             ; on restore les registres
+    pop  AX         ; on restore les registres
     pop  DX
     pop  BX
 ENDM
@@ -93,20 +95,20 @@ ENDM
 ; SHOWPIXEL
 ;   draw a pixel at (xA,yA) with color
 oxgSHOWPIXEL MACRO xA, yA, color
-    push AX          ; on stocke les registres 
+    push AX         ; on stocke les registres 
     push CX
     push DX
     push BX
 
     mov  AL, color
-    mov  CX, xA      ; position x du point
-    mov  DX, yA      ; position y du point
+    mov  CX, xA     ; position x du point
+    mov  DX, yA     ; position y du point
 
-    mov  AH, 0Ch     ; On veut afficher un pixel
-    mov  BH, 1       ; page no - critical while animating
-    int  10h         ; affichage
+    mov  AH, 0Ch    ; On veut afficher un pixel
+    mov  BH, 1      ; page no - critical while animating
+    int  10h        ; affichage
 
-    pop  BX          ; on restore les registres
+    pop  BX         ; on restore les registres
     pop  DX
     pop  CX
     pop  AX
@@ -115,67 +117,75 @@ ENDM
 ; SHOWHORLINE
 ;   draw a horizontal line from (xA,yA) to (xB,yA) with color
 oxgSHOWHORLINE MACRO xA, yA, xB, color
-    local drawLoop        ; on définit un label local
+    local drawLoop  ; on définit un label local
     
-    push CX                ; on sauvegarde le registre
+    push CX         ; on sauvegarde le registre
 
-    mov CX, xA            ; on met xA dans CX
+    mov  CX, xA     ; on met xA dans CX
     drawLoop:
-        oxgSHOWPIXEL CX, yA, color  ; on dessine le pixel
+         ; on dessine le pixel
+         oxgSHOWPIXEL CX, yA, color
 
-        inc CX                      ; on augmente la position x
+         inc CX     ; on augmente la position x
 
-        cmp CX, xB                  ; on vérifie que la nouvelle position est ...
-        jle drawLoop                ; ... <= au max. Oui => On recommence, non => on arrête
+         cmp CX, xB ; on vérifie que la nouvelle position est <= au max. Oui => On recommence, non => on arrête.
+         jle drawLoop 
     
-    pop CX               ; on restaure le registre
+    pop  CX         ; on restaure le registre
 ENDM
 
 ; SHOWVERTLINE
 ;   draw a vertical line from (xA,yA) to (xA,yB) with AL color
 oxgSHOWVERTLINE MACRO xA, yA, yB, color
-    local drawLoop        ; on définit un label local
+    local drawLoop  ; on définit un label local
 
-    push DX                ; on sauvegarde le registre
+    push DX         ; on sauvegarde le registre
 
-    mov DX, yA            ; on met xA dans CX
+    mov DX, yA      ; on met yA dans DX
     drawLoop:
-        oxgSHOWPIXEL xA, DX, color   ; on dessine le pixel
+         ; on dessine le pixel
+         oxgSHOWPIXEL xA, DX, color
 
-        inc DX                       ; on augmente sa position y
+         inc DX     ; on augmente sa position y
 
-        cmp DX, yB                   ; on vérifie que la nouvelle position est ...
-        jle drawLoop                 ; ... <= au max. Oui => On recommence, non => on arrête
+         cmp DX, yB ; on vérifie que la nouvelle position est <= au max. Oui => On recommence, non => on arrête
+         jle drawLoop
 
-    pop DX               ; on restaure le registre
+    pop  DX         ; on restaure le registre
 ENDM
 
 ; SHOWSQUARE
 ;   draw a square from (xA,yA) to (xB, yB) with color
 oxgSHOWSQUARE MACRO xA, yA, xB, yB, color
-    oxgSHOWHORLINE xA, yA, xB, color    ; on dessine la ligne en haut
+    ; on dessine la ligne en haut
+    oxgSHOWHORLINE xA, yA, xB, color
 
-    oxgSHOWVERTLINE xA, yA, yB, color   ; on dessine la ligne à gauche
+    ; on dessine la ligne à gauche
+    oxgSHOWVERTLINE xA, yA, yB, color
 
-    oxgSHOWHORLINE xA, yB, xB, color   ; on dessine la ligne en bas
+    ; on dessine la ligne en bas
+    oxgSHOWHORLINE xA, yB, xB, color
 
-    oxgSHOWVERTLINE xB, yA, yB, color  ; on dessine la ligne à droite
+    ; on dessine la ligne à droite
+    oxgSHOWVERTLINE xB, yA, yB, color
 ENDM
 
 ; SHOWPLAINSQUARE
 ;   draw a filled square from (xA,yA) to (xB, yB) with color
 oxgSHOWPLAINSQUARE MACRO xA, yA, xB, yB, color
-    local drawLoop
+    local drawLoop  ; on définit un label local
 
-    push DX
+    push DX         ; on sauvegarde le registre
 
-    mov DX, yA
+    mov  DX, yA     ; on met yA dans DX
     drawLoop:
-        oxgSHOWHORLINE xA, DX, xB, color
+         ; on dessine la ligne
+         oxgSHOWHORLINE xA, DX, xB, color
 
-        inc DX
+         inc DX     ; on passe à la nouvelle ligne
 
-        cmp DX, yB
-        jle drawLoop
-    pop DX
+         cmp DX, yB ; on vérifie que la nouvelle position est <= au max. Oui => On recommence, non => on arrête
+         jle drawLoop
+
+    pop  DX         ; on restaure le registre
 ENDM
