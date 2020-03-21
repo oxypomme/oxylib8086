@@ -16,6 +16,14 @@ DSEG     SEGMENT
     _LMAGENTA_      EQU 0Dh
     _YELLOW_        EQU 0Eh
     _BWHITE_        EQU 0Fh
+
+    _DPURPLE_       EQU 22h
+    _PURPLE_        EQU 23h
+    _LPURPLE_       EQU 3Ah
+
+    _DRED_          EQU 70h
+
+    _DYELLOW_       EQU 74h
 DSEG     ENDS
 
 RESETVIDEOMEM:
@@ -31,6 +39,15 @@ SETVIDEOMODE:
     int  10h
     pop  AX
     ret
+SETVIDEOMODEVESA:
+    push AX
+    push BX
+    mov  AX, 4F02h 
+    mov  BX, 101h ; 640x480
+    int  10h
+    pop  BX
+    pop  AX
+    ret
 
 ; SETUPGRAPHICS
 ;   initialize few things before we start 
@@ -38,10 +55,15 @@ oxgSETUPGRAPHICS:
     call RESETVIDEOMEM
     call SETVIDEOMODE
     ret
+oxgSETUPGRAPHICSVESA:
+    call RESETVIDEOMEM
+    call SETVIDEOMODEVESA
+    ret
 
 ; FILL
-;   fill the screen with color
-oxgFILLS MACRO color
+;   fill the screen from (xA, yA) to (xB, yB) with color
+;   only VGA modes
+oxgFILLS MACRO xA, yA, xB, yB, color
     ; on stocke les registres
     push AX
     push DS
@@ -52,13 +74,13 @@ oxgFILLS MACRO color
     mov  AH, 06h
     mov  AL, 0      ; on remonte toutes les lignes
     mov  BH, color  ; on attribue de nouvelles lignes
-    mov  CH, 0      ; la colonne la plus haute
-    mov  CL, 0      ; la colonne la plus basse
-    mov  DH, 25     ; le coin en bas à droite
-    mov  DL, 39
+    mov  CL, xA     ; la colonne la plus basse
+    mov  CH, yA     ; la colonne la plus haute
+    mov  DL, xB
+    mov  DH, yB     ; le coin en bas à droite
     int  10h        ; on affiche
 
-    oxgSETCURSOR 0, 0, 0
+    oxgSETCURSOR 0, 0
 
     ; on restore les registres
     pop  DI
@@ -71,17 +93,20 @@ ENDM
 ; CLEAR
 ;   fill the screen with black color
 oxgCLEAR MACRO
-    oxgFILLS _BLACK_
+    oxgFILLS 0, 0, 39, 24, _BLACK_
+ENDM
+oxgCLEARVESA MACRO
+    call SETVIDEOMODE
 ENDM
 
 ; SETCURSOR
-;   set the cursor at (x,y) position at page
-oxgSETCURSOR MACRO page, x, y
+;   set the cursor at (x,y) position at page 0
+oxgSETCURSOR MACRO x, y
     push BX         ; on stocke les registres 
     push DX
     push AX
 
-    mov  BH, page   ; page actuelle
+    mov  BH, 0      ; page actuelle
     mov  DL, x      ; collonne actuelle
     mov  DH, y      ; ligne actuelle
     mov  AH, 02     ; on change la position du curseur
@@ -100,9 +125,9 @@ oxgSHOWPIXEL MACRO xA, yA, color
     push DX
     push BX
 
-    mov  AL, color
     mov  CX, xA     ; position x du point
     mov  DX, yA     ; position y du point
+    mov  AL, color
 
     mov  AH, 0Ch    ; On veut afficher un pixel
     mov  BH, 1      ; page no - critical while animating
