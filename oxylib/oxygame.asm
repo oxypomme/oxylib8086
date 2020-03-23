@@ -28,9 +28,6 @@ oxj_FRM PROC NEAR
     midfrm:
          oxDELAY 0BB8h
          jmp finnalyFrm
-    highfrm:
-         oxDELAY 0FA0h
-         jmp finnalyFrm
     finnalyFrm:
          ret
 oxj_FRM ENDP
