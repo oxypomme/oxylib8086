@@ -1,3 +1,7 @@
+; DELAY
+;   wait before next instruction
+;
+;   time : time to wait (in µsec)
 oxDELAY MACRO time
     push AX         ; on sauvegarde les registres
     push CX

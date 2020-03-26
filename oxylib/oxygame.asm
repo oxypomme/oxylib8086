@@ -18,6 +18,8 @@ DSEG        SEGMENT
     oxj_framerate   DW 0
 DSEG        ENDS
 
+; FRM
+;   wait before calc the next frame
 oxj_FRM PROC NEAR
     cmp  oxj_framerate, 25
     jg   midfrm
@@ -32,6 +34,8 @@ oxj_FRM PROC NEAR
          ret
 oxj_FRM ENDP
 
+; GETKEY
+;   get keypressed in AH
 oxj_GETKEY PROC NEAR
     mov  AH, 10h
     int  16h

@@ -1,5 +1,5 @@
 DSEG        SEGMENT
-    ; Define few keys
+    ; Define few notes
     _C_       EQU 9121
     _D_       EQU 8126
     _E_       EQU 7239
@@ -9,6 +9,11 @@ DSEG        SEGMENT
     _B_       EQU 4831
 DSEG        ENDS
 
+; PLAYSOUND
+;   play a sound
+;
+;   frequency : frequency of the sound
+;   duration : duration of the sound (in ???)
 oxsPLAYSOUND MACRO frequency, duration
     locAL pause1, pause2
 
