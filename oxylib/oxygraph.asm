@@ -99,6 +99,37 @@ oxgCLEARVESA MACRO
     call SETVIDEOMODE
 ENDM
 
+; CLEARSOMETHING
+;   clears a chunk of the screen
+;
+;   X : x coordinate of the top left point (in pixels)
+;   Y : y coordinate of the top left point (int pixels)
+;   sizeX : width of the chunk to clear (in chunks, 8 pixels)
+;   sizeY : height of the chunk to clear (in chunks, 8 pixels)
+oxg_CLEARSOMETHING MACRO X, Y, sizeX, sizeY
+    push AX
+    push BX
+    push CX
+    push DX
+    
+    mov  AX, X
+    mov  BX, Y
+    sar  AX, 3
+    sar  BX, 3
+    mov  CL, AL
+    mov  CH, BL
+    mov  DX, CX
+    add  DL, sizeX
+    add  DH, sizeY
+     
+    oxgFILLS CL, CH, DL, DH, _BLACK_
+     
+    pop  DX
+    pop  CX
+    pop  BX
+    pop  AX
+ENDM
+
 ; SETCURSOR
 ;   set the cursor at (x,y) position at page 0
 oxgSETCURSOR MACRO x, y
