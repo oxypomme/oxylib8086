@@ -35,4 +35,5 @@ oxj_FRM ENDP
 oxj_GETKEY PROC NEAR
     mov  AH, 10h
     int  16h
+    ret
 oxj_GETKEY ENDP
