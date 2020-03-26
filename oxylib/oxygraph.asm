@@ -26,20 +26,23 @@ DSEG     SEGMENT
     _DYELLOW_       EQU 74h
 DSEG     ENDS
 
-RESETVIDEOMEM:
+RESETVIDEOMEM PROC NEAR
     push AX
     mov  AX, 0A000h
     mov  ES, AX     ; Beginning of VGA memory in segment 0xA000
     pop  AX
     ret
+RESETVIDEOMEM ENDP
 
-SETVIDEOMODE:
+SETVIDEOMODE PROC NEAR
     push AX
     mov  AX, 13h    ; Mode VGA de l'affichage, 13h signifie une mémoire de 320*200 avec 256 couleurs
     int  10h
     pop  AX
     ret
-SETVIDEOMODEVESA:
+SETVIDEOMODE ENDP
+
+SETVIDEOMODEVESA PROC NEAR
     push AX
     push BX
     mov  AX, 4F02h 
@@ -48,21 +51,30 @@ SETVIDEOMODEVESA:
     pop  BX
     pop  AX
     ret
+SETVIDEOMODEVESA ENDP
 
 ; SETUPGRAPHICS
-;   initialize few things before we start 
-oxgSETUPGRAPHICS:
+;   initialize few things before we start
+oxgSETUPGRAPHICS PROC NEAR
     call RESETVIDEOMEM
     call SETVIDEOMODE
     ret
-oxgSETUPGRAPHICSVESA:
+oxgSETUPGRAPHICSVESA ENDP
+
+oxgSETUPGRAPHICSVESA PROC NEAR
     call RESETVIDEOMEM
     call SETVIDEOMODEVESA
     ret
+oxgSETUPGRAPHICSVESA ENDP
 
 ; FILL
-;   fill the screen from (xA, yA) to (xB, yB) with color
-;   only VGA modes
+;   fill the screen (only VGA modes)
+;
+;   xA : x coordinate of the top left point (in chunks, 8 pixels)
+;   yA : y coordinate of the top left point (in chunks, 8 pixels)
+;   xB : x coordinate of the bottom right point (in chunks, 8 pixels)
+;   yB : y coordinate of the bottom right point (in chunks, 8 pixels)
+;   color : color to be filled with (in hex code)
 oxgFILLS MACRO xA, yA, xB, yB, color
     ; on stocke les registres
     push AX
@@ -95,6 +107,7 @@ ENDM
 oxgCLEAR MACRO
     oxgFILLS 0, 0, 39, 24, _BLACK_
 ENDM
+
 oxgCLEARVESA MACRO
     call SETVIDEOMODE
 ENDM
@@ -103,7 +116,7 @@ ENDM
 ;   clears a chunk of the screen
 ;
 ;   X : x coordinate of the top left point (in pixels)
-;   Y : y coordinate of the top left point (int pixels)
+;   Y : y coordinate of the top left point (in pixels)
 ;   sizeX : width of the chunk to clear (in chunks, 8 pixels)
 ;   sizeY : height of the chunk to clear (in chunks, 8 pixels)
 oxg_CLEARSOMETHING MACRO X, Y, sizeX, sizeY
@@ -131,7 +144,10 @@ oxg_CLEARSOMETHING MACRO X, Y, sizeX, sizeY
 ENDM
 
 ; SETCURSOR
-;   set the cursor at (x,y) position at page 0
+;   set the cursor at a position at page 0
+;
+;   x : x coordinate of the new cursor (in chunks, 8 pixels)
+;   y : y coordinate of the new cursor (in chunks, 8 pixels)
 oxgSETCURSOR MACRO x, y
     push BX         ; on stocke les registres 
     push DX
@@ -149,7 +165,11 @@ oxgSETCURSOR MACRO x, y
 ENDM
 
 ; SHOWPIXEL
-;   draw a pixel at (xA,yA) with color
+;   draw a pixel 
+;
+;   xA : x coordinate of the top left point (in pixels)
+;   yA : y coordinate of the top left point (in pixels)
+;   color : color of the pixel (hex code)
 oxgSHOWPIXEL MACRO xA, yA, color
     push AX         ; on stocke les registres 
     push CX
@@ -171,7 +191,12 @@ oxgSHOWPIXEL MACRO xA, yA, color
 ENDM
 
 ; SHOWHORLINE
-;   draw a horizontal line from (xA,yA) to (xB,yA) with color
+;   draw a horizontal line 
+;  
+;   xA : x coordinate of the left point (in pixels)
+;   yA : y coordinate of the left point (in pixels)
+;   xB : x coordinate of the right point (in pixels)
+;   color : color of the line (hex code)
 oxgSHOWHORLINE MACRO xA, yA, xB, color
     local drawLoop  ; on définit un label local
     
@@ -191,7 +216,12 @@ oxgSHOWHORLINE MACRO xA, yA, xB, color
 ENDM
 
 ; SHOWVERTLINE
-;   draw a vertical line from (xA,yA) to (xA,yB) with AL color
+;   draw a vertical line
+;  
+;   xA : x coordinate of the top point (in pixels)
+;   yA : y coordinate of the top point (in pixels)
+;   yB : y coordinate of the bottom point (in pixels)
+;   color : color of the line (hex code)
 oxgSHOWVERTLINE MACRO xA, yA, yB, color
     local drawLoop  ; on définit un label local
 
@@ -211,7 +241,13 @@ oxgSHOWVERTLINE MACRO xA, yA, yB, color
 ENDM
 
 ; SHOWSQUARE
-;   draw a square from (xA,yA) to (xB, yB) with color
+;   draw a square
+;  
+;   xA : x coordinate of the top left point (in pixels)
+;   yA : y coordinate of the top left point (in pixels)
+;   xB : x coordinate of the bottom right point (in pixels)
+;   xB : y coordinate of the bottom right point (in pixels)
+;   color : color of the square (hex code)
 oxgSHOWSQUARE MACRO xA, yA, xB, yB, color
     ; on dessine la ligne en haut
     oxgSHOWHORLINE xA, yA, xB, color
@@ -227,7 +263,13 @@ oxgSHOWSQUARE MACRO xA, yA, xB, yB, color
 ENDM
 
 ; SHOWPLAINSQUARE
-;   draw a filled square from (xA,yA) to (xB, yB) with color
+;   draw a filled square
+;  
+;   xA : x coordinate of the top left point (in pixels)
+;   yA : y coordinate of the top left point (in pixels)
+;   xB : x coordinate of the bottom right point (in pixels)
+;   xB : y coordinate of the bottom right point (in pixels)
+;   color : color of the square (hex code)
 oxgSHOWPLAINSQUARE MACRO xA, yA, xB, yB, color
     local drawLoop  ; on définit un label local
 
