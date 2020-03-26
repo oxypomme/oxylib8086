@@ -1,53 +1,51 @@
 DSEG        SEGMENT
     _seed       DW 0
-    oxr_rand   DW 0
+    oxr_rand    DW 0
 DSEG        ENDS
 
+; GENRND
+; --> Thanks to https://stackoverflow.com/a/40709661
+GENRND PROC NEAR
+    mov     AX, 25173        ; LCG Multiplier
+    mul     word ptr [_seed] ; DX:AX = LCG multiplier * seed
+    add     AX, 13849        ; Add LCG increment value
+    ; Modulo 65536, AX = (multiplier*seed+increment) mod 65536
+    mov     [_seed], AX      ; Update seed = return value
+    ret
+GENRND ENDP
 
-; Generate the seed to generate the random thing
-; --> Thanks to https://github.com/oded8bit
-genSeed:
+; oxr_GETRND
+;   set in oxr_rand a random number
+;   --> Thanks to https://stackoverflow.com/a/40709661
+;
+;   min : the min of the number
+;   max : the max of the number
+oxr_GETRND MACRO min, max
+    local generation
+
     push AX
+    push BX
+    push CX
     push DX
 
-    mov  AH, 00h
+    generation:
+    mov  AH, 00h   ; interrupt to get system timer in CX:DX 
     int  1AH
     mov  [_seed], DX
+    call GENRND    ; -> AX is a random number
+    mov  DX, 0
+    mov  CX, 140h    
+    div  CX        ; here dx contains the remainder - from 0 to 319
+
+    cmp  DX, min
+    jl   generation
+    cmp  DX, max
+    jg   generation
+
+    mov  oxr_rand, DX
 
     pop  DX
+    pop  CX
+    pop  BX
     pop  AX
-    
-    ret
-
-; RANDOMWORD
-;   Generate a word between min and max
-oxr_RANDOMWORD MACRO min, max
-    local randomize
-
-    cmp _seed, 0
-    jnz randomize
-    call genSeed
-
-    push DX
-    push AX
-    
-    randomize:
-        mov  ax, 25173           ; LCG Multiplier
-        mul  [WORD PTR _seed] ; DX:AX = LCG multiplier * seed
-        add  ax, 13849           ; Add LCG increment value
-        ; Modulo 65536, AX = (multiplier*seed+increment) mod 65536
-        mov  [oxr_rand], ax           ; Update seed = return value
-        
-        cmp oxr_rand, min
-        jl  randomize
-        cmp oxr_rand, max
-        jg  randomize
-
-    pop  AX
-    pop  DX
-ENDM
-
-oxr_RANDOMBYTE MACRO min, max
-    oxr_RANDOMWORD min, max
-    and oxr_rand, 00FFh
 ENDM
