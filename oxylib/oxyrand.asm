@@ -18,29 +18,20 @@ GENRND ENDP
 ;   set in oxr_rand a random number
 ;   --> Thanks to https://stackoverflow.com/a/40709661
 ;
-;   min : the min of the number
-;   max : the max of the number
-oxr_GETRND MACRO min, max
-    local generation
-
+;   range : max value of random number
+oxr_GETRND MACRO range
     push AX
     push BX
     push CX
     push DX
 
-    generation:
     mov  AH, 00h   ; interrupt to get system timer in CX:DX 
     int  1AH
     mov  [_seed], DX
     call GENRND    ; -> AX is a random number
     mov  DX, 0
-    mov  CX, 140h    
-    div  CX        ; here dx contains the remainder - from 0 to 319
-
-    cmp  DX, min
-    jl   generation
-    cmp  DX, max
-    jg   generation
+    mov  CX, range    
+    div  CX        ; here dx contains the remainder - from 0 to range-1
 
     mov  oxr_rand, DX
 
