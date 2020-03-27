@@ -14,12 +14,12 @@ GENRND PROC NEAR
     ret
 GENRND ENDP
 
-; oxr_GETRND
+; GETRND
 ;   set in oxr_rand a random number
 ;   --> Thanks to https://stackoverflow.com/a/40709661
 ;
 ;   range : max value of random number
-oxr_GETRND MACRO range
+GETRND MACRO range
     push AX
     push BX
     push CX
